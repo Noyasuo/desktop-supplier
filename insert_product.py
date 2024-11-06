@@ -3,58 +3,74 @@ from tkinter import ttk, filedialog
 
 class InsertProductScreen(tk.Frame):
     def __init__(self, master=None):
-        super().__init__(master, bg="#f5f5f5")
+        super().__init__(master, bg="lightgrey")
+        self.configure(bg="lightgrey")
 
-        # Insert Product title
-        label = tk.Label(self, text="Insert Product", font=("Arial", 18), bg="#f5f5f5")
-        label.pack(pady=20)
+        # Create the card frame with padding to move it down a bit
+        card_frame = tk.Frame(self, bg="white", padx=20, pady=20, relief="raised", borderwidth=2)
+        card_frame.pack(padx=20, pady=(40, 20))  # Add more space at the top to move the card down
 
-        # Frame for Product inputs
-        product_frame = tk.Frame(self, bg="#f5f5f5")
-        product_frame.pack(pady=10)
+        # Title for the Insert Product screen inside the card
+        tk.Label(card_frame, text="Insert Product", font=("Arial", 18, "bold"), bg="white").grid(row=0, column=0, columnspan=2, pady=10)
 
-        # Product Title and Categories
-        self.add_label_and_entry(product_frame, "Product Title:", 0)
-        self.add_label_and_dropdown(product_frame, "Categories:", 1)
+        # Product Title
+        self.add_label_and_entry(card_frame, "Product Title:", 1)
 
-        # Product Image fields
-        self.add_image_field(product_frame, "Product image:", 2)
-        self.add_image_field(product_frame, "Product image 2:", 3)
-        self.add_image_field(product_frame, "Product image 3:", 4)
+        # Categories (Dropdown)
+        self.add_label_and_dropdown(card_frame, "Categories:", 2)
 
-        # Product Price, Keyword, and Product inputs
-        self.add_label_and_entry(product_frame, "Product Price:", 5)
-        self.add_label_and_entry(product_frame, "Product Keyword:", 6)
-        self.add_label_and_entry(product_frame, "Product:", 7)
+        # Product Image field (Only Product Image 1 remains)
+        self.add_image_field(card_frame, "Product Image:", 3)
+
+        # Product Price, Keyword, and Description
+        self.add_label_and_entry(card_frame, "Product Price:", 4)
+        self.add_label_and_entry(card_frame, "Product Keyword:", 5)
+        self.add_label_and_entry(card_frame, "Product:", 6)
 
         # Description box
-        description_label = tk.Label(product_frame, text="Description:", font=("Arial", 14), bg="#f5f5f5", anchor='w')
-        description_label.grid(row=8, column=0, padx=10, pady=5, sticky='e')
-        description_box = tk.Text(product_frame, height=4, width=30)
-        description_box.grid(row=8, column=1, padx=10, pady=5)
+        description_label = tk.Label(card_frame, text="Description:", font=("Arial", 14), bg="white", anchor='w')
+        description_label.grid(row=7, column=0, padx=10, pady=5, sticky='e')
+        description_box = tk.Text(card_frame, height=4, width=30)
+        description_box.grid(row=7, column=1, padx=10, pady=5)
 
         # Submit button
-        submit_button = tk.Button(self, text="Insert Product", command=self.submit_product)
-        submit_button.pack(pady=20)
+        submit_button = tk.Button(card_frame, text="Insert Product", command=self.submit_product)
+        submit_button.grid(row=8, column=0, columnspan=2, pady=20)
 
     def add_label_and_entry(self, frame, label_text, row):
         """Helper method to add a label and entry field."""
-        label = tk.Label(frame, text=label_text, font=("Arial", 14), bg="#f5f5f5", anchor='w')
+        label = tk.Label(frame, text=label_text, font=("Arial", 14), bg="white", anchor='w')
         label.grid(row=row, column=0, padx=10, pady=5, sticky='e')
         entry = tk.Entry(frame, width=30)
         entry.grid(row=row, column=1, padx=10, pady=5)
 
     def add_label_and_dropdown(self, frame, label_text, row):
-        """Helper method to add a label and dropdown."""
-        label = tk.Label(frame, text=label_text, font=("Arial", 14), bg="#f5f5f5", anchor='w')
+        """Helper method to add a label and dropdown with a placeholder text."""
+        label = tk.Label(frame, text=label_text, font=("Arial", 14), bg="white", anchor='w')
         label.grid(row=row, column=0, padx=10, pady=5, sticky='e')
-        dropdown = ttk.Combobox(frame, values=["Select Categories", "Category 1", "Category 2"], state="readonly")
-        dropdown.current(0)
+        
+        # Create dropdown with actual categories
+        dropdown = ttk.Combobox(frame, values=["Electronics supply", "Cleaning supply", "Office supply"], state="normal")
+        dropdown.set("Select categories")  # Set the default placeholder text
         dropdown.grid(row=row, column=1, padx=10, pady=5)
+
+        # Bind event to reset placeholder text when the user interacts
+        dropdown.bind("<FocusIn>", lambda e: self.clear_placeholder(dropdown))
+        dropdown.bind("<FocusOut>", lambda e: self.set_placeholder(dropdown))
+
+    def clear_placeholder(self, dropdown):
+        """Clear the placeholder text when the dropdown is focused."""
+        if dropdown.get() == "Select categories":
+            dropdown.set("")
+
+    def set_placeholder(self, dropdown):
+        """Restore placeholder text if the dropdown is empty."""
+        if dropdown.get() == "":
+            dropdown.set("Select categories")
 
     def add_image_field(self, frame, label_text, row):
         """Add a label and 'choose file' button for image selection."""
-        image_label = tk.Label(frame, text=label_text, font=("Arial", 14), bg="#f5f5f5", anchor='w')
+        image_label = tk.Label(frame, text=label_text, font=("Arial", 14), bg="white", anchor='w')
         image_label.grid(row=row, column=0, padx=10, pady=5, sticky='e')
         choose_button = tk.Button(frame, text="no file chosen", command=lambda: self.choose_file(choose_button), width=25)
         choose_button.grid(row=row, column=1, padx=10, pady=5)
@@ -66,4 +82,14 @@ class InsertProductScreen(tk.Frame):
             button.config(text=file_path.split("/")[-1])  # Display only the file name
 
     def submit_product(self):
+        """Handle product submission logic."""
         print("Product submitted!")
+
+# Example of how to run this in a Tkinter window
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("Insert Product Screen")
+    root.geometry("500x600")  # Adjust window size as needed
+    app = InsertProductScreen(master=root)
+    app.pack(fill="both", expand=True)
+    root.mainloop()

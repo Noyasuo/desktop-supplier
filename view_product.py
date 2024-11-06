@@ -1,60 +1,175 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, simpledialog, messagebox
 
 class ViewProductScreen(tk.Frame):
     def __init__(self, master=None):
-        super().__init__(master, bg="#d1e7e1")
+        super().__init__(master, bg="lightgrey")
+        self.master = master
+        self.create_style()  # Apply custom style for row selection color
+        self.create_widgets()
 
-        # Style Treeview for better visual appearance
+    def create_style(self):
+        """Create a custom style to change the selected row color."""
         style = ttk.Style()
-        style.configure("Treeview", rowheight=50, font=("Arial", 12), background="white", fieldbackground="white")
-        style.configure("Treeview.Heading", font=("Arial", 10, "bold"), background="#999", foreground="black")  # Reduced font size
+        style.theme_use("default")
+        
+        # Configure Treeview selection color
+        style.map("Custom.Treeview",
+                  background=[("selected", "#397D49")],  # Selected row color
+                  foreground=[("selected", "white")])    # Selected row text color
 
+    def create_widgets(self):
         # Title label
-        label = tk.Label(self, text="View Products", font=("Arial", 18, "bold"), bg="#d1e7e1")
-        label.pack(pady=20)
+        tk.Label(self, text="View Products", font=("Arial", 16), bg="lightgrey").pack(pady=20)
 
-        # Table columns
-        columns = ("Product ID", "Product Title", "Product Image", "Product Price", "Product Keyword", "Product Date", "Product Delete", "Product Edit")
+        # Create a frame for the table
+        table_frame = tk.Frame(self, bg="lightgrey")
+        table_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-        # Create Treeview
-        self.tree = ttk.Treeview(self, columns=columns, show="headings", height=8)
-        self.tree.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        # Table (Treeview widget) with custom style
+        self.table = ttk.Treeview(
+            table_frame,
+            style="Custom.Treeview",
+            columns=("Product ID", "Product Title", "Product Price", "Product Keyword", "Product Date"),
+            show="headings"
+        )
 
-        # Define column settings
-        self.tree.column("Product ID", width=100, anchor=tk.CENTER)
-        self.tree.column("Product Title", width=150, anchor=tk.W)
-        self.tree.column("Product Image", width=150, anchor=tk.CENTER)  # Product image column (left blank)
-        self.tree.column("Product Price", width=120, anchor=tk.CENTER)
-        self.tree.column("Product Keyword", width=150, anchor=tk.CENTER)
-        self.tree.column("Product Date", width=180, anchor=tk.CENTER)
-        self.tree.column("Product Delete", width=100, anchor=tk.CENTER)
-        self.tree.column("Product Edit", width=100, anchor=tk.CENTER)
+        # Define headings and column widths
+        self.table.heading("Product ID", text="Product ID")
+        self.table.heading("Product Title", text="Product Title")
+        self.table.heading("Product Price", text="Product Price")
+        self.table.heading("Product Keyword", text="Product Keyword")
+        self.table.heading("Product Date", text="Product Date")
 
-        # Define column headers
-        for col in columns:
-            self.tree.heading(col, text=col)
+        self.table.column("Product ID", width=100, anchor=tk.CENTER)
+        self.table.column("Product Title", width=150, anchor=tk.W)
+        self.table.column("Product Price", width=120, anchor=tk.CENTER)
+        self.table.column("Product Keyword", width=150, anchor=tk.CENTER)
+        self.table.column("Product Date", width=180, anchor=tk.CENTER)
 
-        # Product data (without images)
-        products = [
-            (1, "Projector", "", "3,599", "Home Theater", "2024-05-08 04:30:24", "Delete", "Edit"),
-            (2, "Monitor", "", "2,059", "Office Equipment", "2024-04-21 04:30:24", "Delete", "Edit")
+        # Add sample data to the table
+        self.populate_table()
+
+        # Add vertical scrollbar for the table
+        scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.table.yview)
+        self.table.configure(yscroll=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+
+        # Pack the table into the frame
+        self.table.pack(fill="both", expand=True)
+
+        # Action buttons below the table (Edit and Delete buttons)
+        action_button_frame = tk.Frame(self, bg="lightgrey")
+        action_button_frame.pack(pady=20)
+
+        # Edit button (Yellow)
+        self.edit_button = tk.Button(
+            action_button_frame,
+            text="Edit",
+            font=("Arial", 14),
+            bg="#FFEB3B",  # Yellow background color
+            fg="black",    # Black text color
+            command=self.on_edit_button_click
+        )
+        self.edit_button.pack(side="left", padx=10)
+
+        # Delete button (Red)
+        self.delete_button = tk.Button(
+            action_button_frame,
+            text="Delete",
+            font=("Arial", 14),
+            bg="#F44336",  # Red background color
+            fg="white",    # White text color
+            command=self.on_delete_button_click
+        )
+        self.delete_button.pack(side="left", padx=10)
+
+    def populate_table(self):
+        """Populates the table with sample data."""
+        self.sample_data = [
+            (1, "Projector", "3,599", "Home Theater", "2024-05-08 04:30:24"),
+            (2, "Monitor", "2,059", "Office Equipment", "2024-04-21 04:30:24")
         ]
+        for row in self.sample_data:
+            self.table.insert("", "end", values=row)
 
-        # Insert data into treeview with action buttons
-        for product in products:
-            self.tree.insert("", "end", values=product)
+    def on_edit_button_click(self):
+        """Handle the edit button click."""
+        selected_item = self.table.selection()
+        if selected_item:
+            # Get the values of the selected row
+            product_id = self.table.item(selected_item)["values"][0]
+            title = self.table.item(selected_item)["values"][1]
+            price = self.table.item(selected_item)["values"][2]
+            keyword = self.table.item(selected_item)["values"][3]
+            date = self.table.item(selected_item)["values"][4]
 
-        # Scrollbar
-        scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            # Create a pop-up window (dialog) for editing
+            self.open_edit_dialog(selected_item, product_id, title, price, keyword, date)
+        else:
+            messagebox.showwarning("Selection Error", "Please select a product to edit.")
 
-# Test the ViewProductScreen
+    def open_edit_dialog(self, selected_item, product_id, title, price, keyword, date):
+        """Open a dialog for editing the product details."""
+        # Create a new window for editing
+        edit_window = tk.Toplevel(self)
+        edit_window.geometry("400x300")
+        edit_window.title(f"Edit Product ID {product_id}")
+
+        # Fields to edit product information
+        tk.Label(edit_window, text="Product Title").pack(pady=5)
+        title_entry = tk.Entry(edit_window, font=("Arial", 12))
+        title_entry.insert(0, title)
+        title_entry.pack(pady=5)
+
+        tk.Label(edit_window, text="Product Price").pack(pady=5)
+        price_entry = tk.Entry(edit_window, font=("Arial", 12))
+        price_entry.insert(0, price)
+        price_entry.pack(pady=5)
+
+        tk.Label(edit_window, text="Product Keyword").pack(pady=5)
+        keyword_entry = tk.Entry(edit_window, font=("Arial", 12))
+        keyword_entry.insert(0, keyword)
+        keyword_entry.pack(pady=5)
+
+        tk.Label(edit_window, text="Product Date").pack(pady=5)
+        date_entry = tk.Entry(edit_window, font=("Arial", 12))
+        date_entry.insert(0, date)
+        date_entry.pack(pady=5)
+
+        # Save button to update the product details
+        def save_changes():
+            new_title = title_entry.get()
+            new_price = price_entry.get()
+            new_keyword = keyword_entry.get()
+            new_date = date_entry.get()
+
+            # Update the selected product data in the table
+            self.table.item(selected_item, values=(product_id, new_title, new_price, new_keyword, new_date))
+            edit_window.destroy()
+
+        save_button = tk.Button(edit_window, text="Save Changes", font=("Arial", 12), bg="#4CAF50", fg="white", command=save_changes)
+        save_button.pack(pady=10)
+
+        # Cancel button to close the dialog
+        cancel_button = tk.Button(edit_window, text="Cancel", font=("Arial", 12), bg="#F44336", fg="white", command=edit_window.destroy)
+        cancel_button.pack(pady=10)
+
+    def on_delete_button_click(self):
+        """Handle the delete button click."""
+        selected_item = self.table.selection()
+        if selected_item:
+            # Confirm deletion
+            confirm = messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete this product?")
+            if confirm:
+                self.table.delete(selected_item)
+        else:
+            messagebox.showwarning("Selection Error", "Please select a product to delete.")
+
+# To test the ViewProductScreen independently, you can create a root window and add it to this script.
 if __name__ == "__main__":
     root = tk.Tk()
-    root.title("View Products")
-    root.geometry("1000x600")
-    view_product_screen = ViewProductScreen(master=root)
-    view_product_screen.pack(fill=tk.BOTH, expand=True)
+    root.geometry("800x400")
+    app = ViewProductScreen(master=root)
+    app.pack(fill="both", expand=True)
     root.mainloop()
